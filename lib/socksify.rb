@@ -131,6 +131,14 @@ class TCPSocket
     @@socks_ignores = ignores
   end
 
+  def self.socks_recv_timeout
+    @@socks_recv_timeout ||= nil
+  end
+
+  def self.socks_recv_timeout=(timeout_seconds)
+    @@socks_recv_timeout = timeout_seconds
+  end
+
   class SOCKSConnectionPeerAddress < String
     attr_reader :socks_server, :socks_port
 
@@ -167,6 +175,13 @@ class TCPSocket
     if socks_server and socks_port and not socks_ignores.include?(host)
       Socksify::debug_notice "Connecting to SOCKS server #{socks_server}:#{socks_port}"
       initialize_tcp socks_server, socks_port
+
+      socks_recv_timeout = self.class.socks_recv_timeout
+
+      if socks_recv_timeout
+        Socksify::debug_notice "Setting SO_RCVTIMEO for #{socks_server}:#{socks_port} to #{socks_recv_timeout} seconds"
+        setsockopt(Socket::SOL_SOCKET, Socket::SO_RCVTIMEO, [socks_recv_timeout, 0].pack('l_2'))
+      end
 
       socks_authenticate unless @@socks_version =~ /^4/
 
