@@ -86,7 +86,7 @@ class SOCKSError < RuntimeError
     when 8
       AddressTypeNotSupported
     else
-      self
+      self.new("unknown response code #{code}")
     end
   end
 end
